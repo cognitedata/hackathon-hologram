@@ -47,9 +47,6 @@
     }
 
 
-    const TINY_FACE_DETECTOR = 'tiny_face_detector'
-    let selectedFaceDetector =  TINY_FACE_DETECTOR
-
     // tiny_face_detector options
     let inputSize = 128
     let scoreThreshold = 0.5
@@ -66,17 +63,12 @@
         return !!getCurrentFaceDetectionNet().params
     }
 
-    async function changeFaceDetector(detector) {
-        selectedFaceDetector = detector
+    async function run() {
+        // load face detection and face landmark models
         if (!isFaceDetectionModelLoaded()) {
             await getCurrentFaceDetectionNet().load('models/')
         }
-    }
-    async function run() {
-        // load face detection and face landmark models
-        await changeFaceDetector(TINY_FACE_DETECTOR)
         await faceapi.loadFaceLandmarkModel('models/')
-        // await faceapi.loadFaceLandmarkTinyModel('models/tiny_face_detector_model-weights_manifest.json');
 
         // try to access users webcam and stream the images
         // to the video element
