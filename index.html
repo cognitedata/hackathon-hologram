@@ -61,10 +61,16 @@
 
             if (result.faceLandmarks && result.faceLandmarks.positions) {
                 let nosePosAbsolute = result.faceLandmarks.positions[28];
+                var oldNosePos = nosePos;
                 nosePos = {
                     x: (nosePosAbsolute.x - videoWidth / 2) / (videoWidth / 2),
                     y: (nosePosAbsolute.y - videoHeight / 2) / (videoHeight / 2)
                 };
+                nosePos = {
+                    x: (oldNosePos.x + nosePos.x)/2,
+                    y: (oldNosePos.y + nosePos.y)/2
+                };
+
                 // console.log(nosePos);
             }
         }
@@ -112,7 +118,7 @@
 
     var container, controls;
     var camera, scene, renderer;
-    var mainObject;
+    var world;
 
     init();
     animate();
@@ -122,10 +128,10 @@
         container = document.createElement( 'div' );
         document.body.appendChild( container );
 
-        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 10 );
-        camera.position.z = 10;
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 20 );
+        camera.position.z = 7;
 
-        controls = new THREE.TrackballControls( camera );
+        // controls = new THREE.TrackballControls( camera );
 
         scene = new THREE.Scene();
         scene.add( new THREE.HemisphereLight() );
@@ -133,6 +139,30 @@
         var directionalLight = new THREE.DirectionalLight( 0xffeedd );
         directionalLight.position.set( 0, 0, 10 );
         scene.add( directionalLight );
+
+        world = new THREE.Group();
+
+        var geometry = new THREE.BoxGeometry( .1, .1, .1 );
+        var material = new THREE.MeshBasicMaterial( {color: 0x444444} );
+        var cube = new THREE.Mesh( geometry, material );
+        world.add(cube);
+
+        for (var i = -10; i <= 10; i+=2) {
+            for (var j = -10; j <= 0; j+=2) {
+                for (var k = -10; k <= 10; k+=2) {
+                    var cube3 = new THREE.Mesh(geometry, material);
+                    cube3.position.set(i, k, j);
+                    world.add(cube3);
+                }
+            }
+        }
+
+        var cube2 = new THREE.Mesh( geometry, material );
+        cube2.position.set(0, 0, -2);
+        world.add(cube2);
+
+
+        scene.add(world);
 
         //3ds files dont store normal maps
         var loader = new THREE.TextureLoader();
@@ -153,9 +183,10 @@
 
             } );
 
-            mainObject = object;
-            mainObject.rotation.set(-Math.PI/2, 0, -Math.PI/4);
-            scene.add( object );
+            var mainObject = object;
+            mainObject.rotation.set(-Math.PI/2, 0, -Math.PI/5);
+            mainObject.position.set(0, 0, 2);
+            world.add( mainObject );
 
         } );
 
@@ -178,7 +209,7 @@
         w = window.innerWidth;
         h = window.innerHeight;
         fullWidth = w * 3;
-        fullHeight = h * 2;
+        fullHeight = h * 3;
 
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -188,11 +219,21 @@
 
 
     function animate() {
-        if (mainObject && nosePos && nosePos.x && nosePos.y) {
+        if (world && nosePos && nosePos.x && nosePos.y) {
             camera.setViewOffset(fullWidth, fullHeight, w * (1 + nosePos.x), h * (1 - nosePos.y), w, h);
-            mainObject.position.set(2 * w * nosePos.x / 500, 2 * h * nosePos.y / 500, 5);
+
+            var factor = 1.8;
+            var xOffset = factor * w * nosePos.x / 500;
+            var yOffset = factor * h * nosePos.y / 500;
+            world.position.set(xOffset, yOffset, 0);
+            // mainObject.position.set(0, 0, 2);
+            // cube.position.set(0,0,0);
+            // mainObject.position.set(xOffset, yOffset, 2);
+            // cube.position.set(xOffset, yOffset, 0);
+            // camera.position.set(-xOffset, -yOffset, 10);
+            // camera.lookAt(new THREE.Vector3(-xOffset, -yOffset, 0));
         }
-        controls.update();
+        // controls.update();
 
         renderer.render( scene, camera );
 
